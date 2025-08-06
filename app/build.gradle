@@ -1,10 +1,11 @@
-
 plugins {
     id 'com.android.application'
 }
 
 android {
+    namespace "com.chomibinine.sajaquiz"   // ✅ 필수 항목 추가
     compileSdk 33
+
     defaultConfig {
         applicationId "com.chomibinine.sajaquiz"
         minSdk 21
