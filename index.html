@@ -728,6 +728,110 @@ body {
     box-shadow: 0 4px 10px rgba(26, 115, 232, 0.2);
 }
 </style>
+
+<style>
+/* === Clean Polish Pack (non-destructive, overrides only) === */
+:root {
+  --brand: #c62828;
+  --text: #222;
+  --muted: #6b7280;
+  --bg: #fafafa;
+  --card: #ffffff;
+  --ring: rgba(198,40,40,.35);
+  --shadow: 0 10px 30px rgba(0,0,0,.18);
+}
+
+html, body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Noto Sans KR', Apple SD Gothic Neo, 'Malgun Gothic', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--bg);
+}
+
+/* Cards / panels keep existing layout, just subtle shadow & radius */
+.card, .panel, .box {
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: 0 4px 18px rgba(0,0,0,.06);
+}
+
+/* Buttons */
+button, .btn {
+  transition: transform .06s ease, box-shadow .2s ease, background-color .2s ease, color .2s ease;
+  border-radius: 10px;
+}
+button:hover, .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,0,0,.08);
+}
+button:active, .btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+}
+/* Primary tone */
+button.primary, .btn-primary {
+  background: var(--brand);
+  color: #fff;
+  border: none;
+}
+
+/* Inputs */
+input[type="text"], input:not([type]), input[type="search"], textarea {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+  background: #fff;
+}
+input[type="text"]:focus, input:not([type]):focus, input[type="search"]:focus, textarea:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 4px var(--ring);
+}
+
+/* Quiz range completed (subtle) */
+.quiz-range.completed {
+  background-color: #eaf7ef;
+  color: #156f3a;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+/* Hide any remaining debug UIs */
+.debug-toolbar, #mobdbg, #__dbg_badge, #dbgOut { display: none !important; }
+
+/* Smooth scroll areas */
+#quiz-selection { scrollbar-width: thin; }
+#quiz-selection::-webkit-scrollbar { height: 8px; width: 8px; }
+#quiz-selection::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 8px; }
+
+/* Dialog polish */
+dialog#registerDialog {
+  border: none !important;
+  border-radius: 14px !important;
+  padding: 18px !important;
+  width: min(92vw, 420px) !important;
+  box-shadow: var(--shadow) !important;
+  background: #fff;
+}
+dialog#registerDialog::backdrop {
+  background: rgba(17,17,17,.35);
+  backdrop-filter: blur(2px);
+}
+#registerForm h3 { color: var(--brand) !important; }
+#registerForm label { color: var(--text) !important; }
+#registerForm button[type="submit"] {
+  background: var(--brand) !important; color:#fff !important; border: none !important;
+}
+#registerForm button[type="reset"] {
+  background: #f3f4f6 !important; color:#374151 !important; border: 1px solid #e5e7eb !important;
+}
+
+/* Minor typography tidy */
+h1, h2, h3 { letter-spacing: -.02em; }
+.small, .muted, .hint { color: var(--muted); }
+</style>
+
 </head>
 <body>
 <div id="user-message"></div>
@@ -6270,6 +6374,111 @@ function showQuestionWithTTS(word) {
   const questionText = document.getElementById('question-text');
   questionText.innerHTML = `${word} <button onclick="speak('${word}')" style="margin-left: 10px;">🔊</button>`;
 }
+</script>
+
+
+<!-- === REGISTER DIALOG (no prompt) === -->
+<dialog id="registerDialog" style="border:none; border-radius:12px; padding:16px; width:92%; max-width:420px; box-shadow:0 12px 30px rgba(0,0,0,.25); z-index:99999">
+  <form method="dialog" id="registerForm" style="display:flex; flex-direction:column; gap:12px">
+    <h3 style="margin:0; font-weight:800; color:#c62828">새 사용자 등록</h3>
+    <label for="regName" style="font-size:.95rem; color:#333">이름 (최대 8자)</label>
+    <input id="regName" name="regName" maxlength="8" inputmode="text" enterkeyhint="done"
+           autocomplete="off" autocapitalize="off" spellcheck="false"
+           style="padding:10px 12px; border:1px solid #ddd; border-radius:8px; font-size:1rem" />
+    <div style="display:flex; gap:8px; margin-top:4px">
+      <button value="cancel" type="reset"
+              style="flex:1; padding:10px 0; border-radius:8px; border:1px solid #ddd; background:#f2f2f2">취소</button>
+      <button value="ok" type="submit"
+              style="flex:1; padding:10px 0; border-radius:8px; border:none; background:#c62828; color:#fff">추가</button>
+    </div>
+  </form>
+</dialog>
+<script>
+// Kill native prompt/confirm to stop "이 페이지 내용" forever (safety net)
+window.prompt = function(){ return null; };
+window.confirm = function(){ return true; }; // avoid accidental blocks
+
+(function(){
+  function $(id){ return document.getElementById(id); }
+  function norm(s){
+    if (!s) return '';
+    try { s = s.normalize('NFC'); } catch(_){}
+    return s.replace(/\u00A0/g,' ')
+            .replace(/[\u200B-\u200F\u202A-\u202E\u2060\uFEFF]/g,'')
+            .trim();
+  }
+  function validate(name){
+    if (!name) return '이름을 입력해주세요.';
+    if (name.length > 8) return '이름은 8자 이내로 입력해주세요.';
+    try {
+      const ud = window.userData || JSON.parse(localStorage.getItem('userData')||'{}');
+      if (Object.values(ud).some(u => u && u.name === name)) return '이미 존재하는 이름입니다.';
+    } catch(_) {}
+    return null;
+  }
+  function minimalSave(name){
+    const id = Date.now() + '_' + Math.floor(Math.random()*1e6);
+    let ud = {};
+    try { ud = JSON.parse(localStorage.getItem('userData')||'{}'); } catch(_){}
+    ud[id] = { name, correct: [], correctCount:0, level:1, xp:0, lastPlayed:new Date().toISOString() };
+    localStorage.setItem('userData', JSON.stringify(ud));
+    localStorage.setItem('currentUserId', id);
+    if (typeof window.refreshUserList === 'function') try{ refreshUserList(); }catch(_){}
+    if (typeof window.updateUI === 'function') try{ updateUI(); }catch(_){}
+  }
+
+  const dlg = $('registerDialog');
+  const form = $('registerForm');
+  const input = $('regName');
+
+  // Intercept the + button to open our dialog and stop any old handler
+  function hookPlus(){
+    var plus = $('add-user-btn') || document.querySelector('button#add-user + button, #add-user-btn, button.add-user, .add-user-btn');
+    if (!plus) return;
+    const handler = function(ev){
+      if (ev){ ev.preventDefault && ev.preventDefault(); ev.stopImmediatePropagation && ev.stopImmediatePropagation(); }
+      input.value = '';
+      dlg.showModal();
+      setTimeout(()=>input.focus(),0);
+      return false;
+    };
+    plus.addEventListener('click', handler, true);
+    plus.addEventListener('touchend', handler, true);
+  }
+
+  // Submit
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    const name = norm(input.value);
+    const err = validate(name);
+    if (err){ alert(err); input.focus(); return; }
+
+    let ok = false;
+    if (typeof window.addNewUser === 'function') { try { addNewUser(name); ok = true; } catch(_){ ok=false; } }
+    else if (typeof window.createUser === 'function') { try { createUser(name); ok = true; } catch(_){ ok=false; } }
+    else { minimalSave(name); ok = true; }
+
+    if (ok) dlg.close('ok');
+  });
+  form.addEventListener('reset', function(){ dlg.close('cancel'); });
+
+  // Run
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', hookPlus);
+  } else {
+    hookPlus();
+  }
+})();
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  ['.debug-toolbar','#mobdbg','#__dbg_badge','#dbgOut'].forEach(function(sel){
+    var el = document.querySelector(sel);
+    if (el) el.style.display = 'none';
+  });
+});
 </script>
 
 </body>
